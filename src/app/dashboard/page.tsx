@@ -8,6 +8,17 @@ export default async function DashboardPage() {
   const session = await auth();
   const organizationId = session?.user?.organizationId;
 
+  if (!organizationId) {
+    return (
+      <div className="container p-6">
+        <h1 className="text-3xl font-bold mb-6">Dashboard Overview</h1>
+        <div className="text-center p-8">
+          <p className="text-lg text-muted-foreground">Please sign in with an organization account to view the dashboard.</p>
+        </div>
+      </div>
+    );
+  }
+
   // Fetch data
   const employeesResult = await getEmployees(organizationId);
   const projectsResult = await getProjects(organizationId);

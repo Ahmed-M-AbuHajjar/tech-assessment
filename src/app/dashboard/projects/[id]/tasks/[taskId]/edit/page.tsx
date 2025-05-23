@@ -7,12 +7,13 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { z } from 'zod'
+import { use } from 'react'
 
 interface EditTaskPageProps {
-  params: {
+  params: Promise<{
     id: string
     taskId: string
-  }
+  }>
 }
 
 export default function EditTaskPage({ params }: EditTaskPageProps) {
@@ -20,17 +21,18 @@ export default function EditTaskPage({ params }: EditTaskPageProps) {
   const [task, setTask] = useState<any>(null)
   const [employees, setEmployees] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const resolvedParams = use(params)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [{ data: taskData }, { data: employeesData }] = await Promise.all([
-          getTask(params.taskId),
-          getEmployees(params.id),
+          getTask(resolvedParams.taskId),
+          getEmployees(resolvedParams.id),
         ])
 
         if (!taskData) {
-          router.push(`/dashboard/projects/${params.id}`)
+          router.push(`/dashboard/projects/${resolvedParams.id}`)
           return
         }
 
@@ -38,14 +40,14 @@ export default function EditTaskPage({ params }: EditTaskPageProps) {
         setEmployees(employeesData || [])
       } catch (error) {
         toast.error('Failed to load task data')
-        router.push(`/dashboard/projects/${params.id}`)
+        router.push(`/dashboard/projects/${resolvedParams.id}`)
       } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [params.id, params.taskId, router])
+  }, [resolvedParams.id, resolvedParams.taskId, router])
 
   if (loading) {
     return <div>Loading...</div>
@@ -64,13 +66,13 @@ export default function EditTaskPage({ params }: EditTaskPageProps) {
             ...task,
             assignedEmployeeIds: task.assignedEmployees?.map((e: any) => e.id) || [],
           }}
-          projectId={params.id}
+          projectId={resolvedParams.id}
           employees={employees}
           onSubmit={async (data) => {
             try {
-              await updateTask(params.taskId, data)
+              await updateTask(resolvedParams.taskId, data)
               toast.success('Task updated successfully')
-              router.push(`/dashboard/projects/${params.id}`)
+              router.push(`/dashboard/projects/${resolvedParams.id}`)
             } catch (error) {
               toast.error('Failed to update task')
             }

@@ -62,8 +62,12 @@ export async function deleteProject(id: string) {
   }
 }
 
-export async function getProjects(organizationId: string) {
+export async function getProjects(organizationId: string | null | undefined) {
   try {
+    if (!organizationId) {
+      return { success: false, error: 'Organization ID is required' }
+    }
+
     console.log('Fetching projects for organization:', organizationId)
     const projects = await db.project.findMany({
       where: { organizationId },

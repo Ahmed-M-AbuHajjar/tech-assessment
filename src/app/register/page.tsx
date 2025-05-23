@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -36,7 +37,19 @@ export default function RegisterPage() {
         throw new Error(error.message || "Something went wrong");
       }
 
-      router.push("/login?registered=true");
+      // Sign in the user after successful registration
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
+      router.push("/dashboard");
+      router.refresh();
     } catch (error) {
       setError(error instanceof Error ? error.message : "Something went wrong");
     } finally {
@@ -97,7 +110,7 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <p className="px-8 text-center text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground text-center">
           Already have an account?{" "}
           <Link
             href="/login"

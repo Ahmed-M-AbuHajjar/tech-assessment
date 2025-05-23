@@ -22,6 +22,9 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           where: {
             email: credentials.email,
           },
+          include: {
+            organization: true
+          }
         });
 
         if (!user || !user.password) {
@@ -38,6 +41,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
+          organizationId: user.organizationId,
         };
       },
     }),
@@ -46,12 +50,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (token.sub && session.user) {
         session.user.id = token.sub;
+        session.user.organizationId = token.organizationId;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.organizationId = user.organizationId;
       }
       return token;
     },

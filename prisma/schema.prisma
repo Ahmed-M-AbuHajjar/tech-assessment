@@ -17,37 +17,11 @@ model User {
   emailVerified DateTime?
   password      String?
   image         String?
-  accounts      Account[]
-  sessions      Session[]
+  verificationToken String? @unique
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-}
-
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -56,4 +30,80 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Organization {
+  id        String     @id @default(cuid())
+  name      String
+  users     User[]
+  employees Employee[]
+  projects  Project[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Employee {
+  id            String    @id @default(cuid())
+  employeeId    String    @unique
+  name          String
+  joiningDate   DateTime
+  basicSalary   Float
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  assignedTasks Task[] @relation("EmployeeAssignedTasks")
+  salaries      Salary[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  tasks       Task[]
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  priority    Priority  @default(MEDIUM)
+  status      Status    @default(TODO)
+  assignedEmployees Employee[] @relation("EmployeeAssignedTasks")
+  project     Project   @relation(fields: [projectId], references: [id])
+  projectId   String
+  startDate   DateTime?
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Salary {
+  id          String    @id @default(cuid())
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  month       DateTime
+  basicSalary Float
+  bonus       Float     @default(0)
+  deduction   Float     @default(0)
+  totalAmount Float
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Status {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
 }
